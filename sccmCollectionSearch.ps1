@@ -23,16 +23,6 @@ function SCCMCollectionSearch ($ConnectionDetails) {
     $Cred = New-Object System.Management.Automation.PSCredential ($Username, $SecPasswd)
 
     # Functions
-
-    function ShowMessage {
-        [CmdletBinding()]
-        param (
-        [string]$Message    
-        )
-        #show the message
-        [System.Windows.Forms.Messagebox]::Show($Message)
-    }
-
     function ClearComputers{
         $TextBox1.Text = ""
         $ListBox1.items.Clear()
@@ -410,15 +400,9 @@ function SCCMCollectionSearch ($ConnectionDetails) {
         [System.Windows.Forms.Clipboard]::SetText($LabelText)
     }
 
-    function ConnectionWindow {
-        $Form2.DisplayModal()
-    }
-
-
     # -- Main Form --
     # Top
     $Form1 = New-Object System.Windows.Forms.Form
-    $Button1 = New-Object System.Windows.Forms.Button
     $Label1 = New-Object System.Windows.Forms.Label
 
     # Left
@@ -453,23 +437,6 @@ function SCCMCollectionSearch ($ConnectionDetails) {
 
 
     $InitialFormWindowState = New-Object System.Windows.Forms.FormWindowState
-
-    # -- Connection Form --
-    $Form2 = New-Object System.Windows.Forms.Form
-    $FlowLayoutPanel2 = New-Object System.Windows.Forms.FlowLayoutPanel
-    $Label8 = New-Object System.Windows.Forms.Label
-    $TextBox4 = New-Object System.Windows.Forms.TextBox
-    $Label9 = New-Object System.Windows.Forms.Label
-    $TextBox5 = New-Object System.Windows.Forms.TextBox
-    $Label10 = New-Object System.Windows.Forms.Label
-    $TextBox6 = New-Object System.Windows.Forms.TextBox
-    $Label11 = New-Object System.Windows.Forms.Label
-    $TextBox7 = New-Object System.Windows.Forms.TextBox
-    $Label12 = New-Object System.Windows.Forms.Label
-    $TextBox8 = New-Object System.Windows.Forms.TextBox
-    $button6 = New-Object System.Windows.Forms.Button
-
-
 
     #Events
     $SearchButtonClicked = 
@@ -935,15 +902,30 @@ function ConnectionDetails
 			$namespace = "root\sms\site_$Site"
 			$WbemLocator = New-Object -ComObject "WbemScripting.SWbemLocator"
 			try {
-				$WbemServices = $WbemLocator.ConnectServer($Server, $Namespace, $username, $Password)
+				$WbemLocator.ConnectServer($Server, $Namespace, $username, $Password)
 				$Message = "Success!"
 				$ConLabel6.Text = $Message
 				$ConButton3.Enabled = $True			
 			}
 			catch {
-				$Message = "Fail"
-				$ConLabel6.Text = $Message
-				$ConButton3.Enabled = $false
+                $ErrorCode = $_.Exception.ErrorCode
+                Write-Host ($ErrorCode.Tostring())
+                if ($ErrorCode -eq -2147023174){
+                    $Message = "Unable to connect to server"
+                }
+
+                elseif ($ErrorCode -eq -2147217394){
+                    $Message = "Incorrect site"
+                }
+                else {
+                    $Message = $_.Exception.Message
+
+                }
+
+                $ConLabel6.Text = $Message
+                $ConButton3.Enabled = $false
+
+                
 			}
 	}
 	
@@ -962,21 +944,26 @@ function ConnectionDetails
 
 
     $Handler_Textbox_Enter =
-    {
-        if ($ConButton3.Enabled){
-            &$handler_button3_Click
+    {   
+        $Password = ""
+        $Password = $ConTextBox2.Text
+        if ($Password){
+            if ($ConButton3.Enabled){
+                &$handler_button3_Click
+            }
+            else {
+                &$handler_button2_Click
+            }            
         }
-        else {
-            &$handler_button2_Click
-        }
+
         
     }
 
 	# Widget Layout
 
 	$System_Drawing_Size = New-Object System.Drawing.Size
-	$System_Drawing_Size.Height = 185
-	$System_Drawing_Size.Width = 281
+	$System_Drawing_Size.Height = 200
+	$System_Drawing_Size.Width = 300
 	$ConForm1.ClientSize = $System_Drawing_Size
 	$ConForm1.DataBindings.DefaultDataSourceUpdateMode = 0
 	$ConForm1.Text = "SCCM Connection"
@@ -988,8 +975,8 @@ function ConnectionDetails
 	$System_Drawing_Point.Y = 125
 	$ConLabel6.Location = $System_Drawing_Point
 	$System_Drawing_Size = New-Object System.Drawing.Size
-	$System_Drawing_Size.Height = 21
-	$System_Drawing_Size.Width = 87
+	$System_Drawing_Size.Height = 36
+	$System_Drawing_Size.Width = 106
 	$ConLabel6.Size = $System_Drawing_Size
 	$ConLabel6.Text = "Not tested"
 	$ConForm1.Controls.Add($ConLabel6)
@@ -998,7 +985,7 @@ function ConnectionDetails
 	$ConButton3.Enabled = $false
 	$System_Drawing_Point = New-Object System.Drawing.Point
 	$System_Drawing_Point.X = 12
-	$System_Drawing_Point.Y = 149
+	$System_Drawing_Point.Y = 164
 	$ConButton3.Location = $System_Drawing_Point
 	$System_Drawing_Size = New-Object System.Drawing.Size
 	$System_Drawing_Size.Height = 23
@@ -1011,7 +998,8 @@ function ConnectionDetails
 
 	$ConForm1.Controls.Add($ConButton3)
 
-	$ConTextBox4.DataBindings.DefaultDataSourceUpdateMode = 0
+    # Site
+    $ConTextBox4.DataBindings.DefaultDataSourceUpdateMode = 0
 	$System_Drawing_Point = New-Object System.Drawing.Point
 	$System_Drawing_Point.X = 114
 	$System_Drawing_Point.Y = 91
@@ -1019,7 +1007,7 @@ function ConnectionDetails
 	$ConTextBox4.Text = $Site
 	$System_Drawing_Size = New-Object System.Drawing.Size
 	$System_Drawing_Size.Height = 20
-	$System_Drawing_Size.Width = 155
+	$System_Drawing_Size.Width = 174
 	$ConTextBox4.Size = $System_Drawing_Size
     $ConTextBox4.TabIndex = 3
     $ConTextBox4.add_KeyUp(
@@ -1034,7 +1022,8 @@ function ConnectionDetails
 
 
 	$ConForm1.Controls.Add($ConTextBox4)
-
+    
+    # Server
 	$ConTextBox3.DataBindings.DefaultDataSourceUpdateMode = 0
 	$System_Drawing_Point = New-Object System.Drawing.Point
 	$System_Drawing_Point.X = 114
@@ -1043,7 +1032,7 @@ function ConnectionDetails
 	$ConTextBox3.Text = $Server
 	$System_Drawing_Size = New-Object System.Drawing.Size
 	$System_Drawing_Size.Height = 20
-	$System_Drawing_Size.Width = 155
+	$System_Drawing_Size.Width = 174
 	$ConTextBox3.Size = $System_Drawing_Size
     $ConTextBox3.TabIndex = 2
     $ConTextBox3.add_KeyUp(
@@ -1057,14 +1046,15 @@ function ConnectionDetails
 
 	$ConForm1.Controls.Add($ConTextBox3)
 
-	$ConTextBox2.DataBindings.DefaultDataSourceUpdateMode = 0
+    # Password
+    $ConTextBox2.DataBindings.DefaultDataSourceUpdateMode = 0
 	$System_Drawing_Point = New-Object System.Drawing.Point
 	$System_Drawing_Point.X = 114
 	$System_Drawing_Point.Y = 42
 	$ConTextBox2.Location = $System_Drawing_Point
 	$System_Drawing_Size = New-Object System.Drawing.Size
 	$System_Drawing_Size.Height = 20
-	$System_Drawing_Size.Width = 155
+	$System_Drawing_Size.Width = 174
 	$ConTextBox2.Size = $System_Drawing_Size
 	$ConTextBox2.TabIndex = 1
     $ConTextBox2.UseSystemPasswordChar = $True
@@ -1079,7 +1069,8 @@ function ConnectionDetails
 
 	$ConForm1.Controls.Add($ConTextBox2)
 
-	$ConTextBox1.DataBindings.DefaultDataSourceUpdateMode = 0
+    # Username
+    $ConTextBox1.DataBindings.DefaultDataSourceUpdateMode = 0
 	$System_Drawing_Point = New-Object System.Drawing.Point
 	$System_Drawing_Point.X = 114
 	$System_Drawing_Point.Y = 16
@@ -1087,7 +1078,7 @@ function ConnectionDetails
 	$ConTextBox1.Text = $UserDomainName
 	$System_Drawing_Size = New-Object System.Drawing.Size
 	$System_Drawing_Size.Height = 20
-	$System_Drawing_Size.Width = 155
+	$System_Drawing_Size.Width = 174
 	$ConTextBox1.Size = $System_Drawing_Size
     $ConTextBox1.TabIndex = 0
     $ConTextBox1.add_KeyUp(
@@ -1179,8 +1170,8 @@ function ConnectionDetails
 	$ConButton1.DataBindings.DefaultDataSourceUpdateMode = 0
 
 	$System_Drawing_Point = New-Object System.Drawing.Point
-	$System_Drawing_Point.X = 194
-	$System_Drawing_Point.Y = 149
+	$System_Drawing_Point.X = 213
+	$System_Drawing_Point.Y = 164
 	$ConButton1.Location = $System_Drawing_Point
 	$System_Drawing_Size = New-Object System.Drawing.Size
 	$System_Drawing_Size.Height = 23
