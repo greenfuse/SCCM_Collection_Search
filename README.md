@@ -1,6 +1,6 @@
 # SCCM_Collection_Search
 Simple App written in PowerShell to quickly obtain information from SCCM.
-Does not require installation of SCCM cmdlet modules.
+Does not require installation of SCCM cmdlets.
 Search for computers or collections. 
 
 Select a computer to:
