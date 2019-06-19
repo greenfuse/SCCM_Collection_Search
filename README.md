@@ -10,12 +10,12 @@ Select a computer to:
 
 Select a collection to:
 
-* List rules for the collection
+* List membership rules for the collection
 * Display information about the collection
 
 Filter for rule type.
 
-Select a rule to display information about the rule.
+Select a membership rule to display information about the rule.
 
 Right-click details to copy the section to the clipboard.
 
